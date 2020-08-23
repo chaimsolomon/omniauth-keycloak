@@ -17,7 +17,7 @@ module OmniAuth
             end
 
             def call(env)
-                setup_phase
+                setup_phase if Rails.env == 'production'
                 # Add the end_session_endpoint to the environment of the request
                 env['end_session_endpoint'] = @end_session_endpoint
                 super
