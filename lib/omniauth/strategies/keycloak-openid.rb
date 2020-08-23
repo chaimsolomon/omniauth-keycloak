@@ -12,7 +12,7 @@ module OmniAuth
             def initialize(app, *args, &block)
                 original_initialize_return_value = super
                 # Do the setup at app start, not only at the first request
-                setup_phase
+                setup_phase if Rails.env == 'production'
                 original_initialize_return_value
             end
 
