@@ -9,6 +9,20 @@ module OmniAuth
             attr_reader :token_url
             attr_reader :cert
 
+            def initialize(app, *args, &block)
+                original_initialize_return_value = super
+                # Do the setup at app start, not only at the first request
+                setup_phase
+                original_initialize_return_value
+            end
+
+            def call(env)
+                setup_phase
+                # Add the end_session_endpoint to the environment of the request
+                env['end_session_endpoint'] = @end_session_endpoint
+                super
+            end
+
             def setup_phase
                 if @authorize_url.nil? || @token_url.nil?
                     realm = options.client_options[:realm].nil? ? options.client_id : options.client_options[:realm]
@@ -20,6 +34,8 @@ module OmniAuth
                         @userinfo_endpoint = json["userinfo_endpoint"]
                         @authorize_url = json["authorization_endpoint"].gsub(site, "")
                         @token_url = json["token_endpoint"].gsub(site, "")
+                        # Keep the end_session_endpoint available
+                        @end_session_endpoint = json["end_session_endpoint"]
                         options.client_options.merge!({
                             authorize_url: @authorize_url,
                             token_url: @token_url
@@ -31,24 +47,24 @@ module OmniAuth
                         else
                             #TODO: Throw Error
                             puts "Couldn't get Cert"
-                        end 
+                        end
                     else
                         #TODO: Throw Error
                         puts response.status
                     end
                 end
             end
-            
+
             def build_access_token
                 verifier = request.params["code"]
-                client.auth_code.get_token(verifier, 
+                client.auth_code.get_token(verifier,
                     {:redirect_uri => callback_url.gsub(/\?.+\Z/, "")}
-                    .merge(token_params.to_hash(:symbolize_keys => true)), 
+                    .merge(token_params.to_hash(:symbolize_keys => true)),
                     deep_symbolize(options.auth_token_params))
             end
 
             uid{ raw_info['sub'] }
-        
+
             info do
             {
                 :name => raw_info['name'],
@@ -57,13 +73,13 @@ module OmniAuth
                 :last_name => raw_info['family_name']
             }
             end
-        
+
             extra do
             {
                 'raw_info' => raw_info
             }
             end
-        
+
             def raw_info
                 id_token_string = access_token.token
                 jwk = JSON::JWK.new(@cert)
