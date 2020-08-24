@@ -12,14 +12,12 @@ module OmniAuth
             def initialize(app, *args, &block)
                 original_initialize_return_value = super
                 # Do the setup at app start, not only at the first request
-                puts "===!!!==="
-                puts Rails.env
-                setup_phase if Rails.env == 'production'
+                setup_phase if ENV['KC_ACTIVE'] == 'true'
                 original_initialize_return_value
             end
 
             def call(env)
-                setup_phase if Rails.env == 'production'
+                setup_phase if ENV['KC_ACTIVE'] == 'true'
                 # Add the end_session_endpoint to the environment of the request
                 env['end_session_endpoint'] = @end_session_endpoint
                 super
@@ -32,6 +30,7 @@ module OmniAuth
                     response = Faraday.get "#{options.client_options[:site]}/auth/realms/#{realm}/.well-known/openid-configuration"
                     if (response.status == 200)
                         json = MultiJson.load(response.body)
+                        puts json
                         @certs_endpoint = json["jwks_uri"]
                         @userinfo_endpoint = json["userinfo_endpoint"]
                         @authorize_url = json["authorization_endpoint"].gsub(site, "")
