@@ -23,6 +23,21 @@ module OmniAuth
                 super
             end
 
+            def authorize_params
+                options.authorize_params[:state] = SecureRandom.hex(24)
+                params = options.authorize_params.merge(options_for("authorize"))
+                if OmniAuth.config.test_mode
+                    @env ||= {}
+                    @env["rack.session"] ||= {}
+                end
+                session["omniauth.state"] = params[:state]
+                req = Rack::Request.new(env)
+                if req.cookies['kc_idp_hint']
+                    params['kc_idp_hint'] = req.cookies['kc_idp_hint']
+                end
+                params
+            end
+
             def setup_phase
                 if @authorize_url.nil? || @token_url.nil?
                     realm = options.client_options[:realm].nil? ? options.client_id : options.client_options[:realm]
