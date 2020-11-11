@@ -35,6 +35,9 @@ module OmniAuth
                 if req.cookies['kc_idp_hint']
                     params['kc_idp_hint'] = req.cookies['kc_idp_hint']
                 end
+                if req.cookies['kc_state']
+                    params['state'] = req.cookies['kc_state']
+                end
                 params
             end
 
