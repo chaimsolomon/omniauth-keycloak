@@ -24,7 +24,11 @@ module OmniAuth
             end
 
             def authorize_params
-                options.authorize_params[:state] = SecureRandom.hex(24)
+                if req.cookies['kc_state']
+                    options.authorize_params[:state] =  req.cookies['kc_state']
+                else
+                    options.authorize_params[:state] = SecureRandom.hex(24)
+                end
                 params = options.authorize_params.merge(options_for("authorize"))
                 if OmniAuth.config.test_mode
                     @env ||= {}
