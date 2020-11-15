@@ -24,7 +24,11 @@ module OmniAuth
             end
 
             def authorize_params
-                options.authorize_params[:state] = SecureRandom.hex(24)
+                if req.cookies['kc_state']
+                    options.authorize_params[:state] =  req.cookies['kc_state']
+                else
+                    options.authorize_params[:state] = SecureRandom.hex(24)
+                end
                 params = options.authorize_params.merge(options_for("authorize"))
                 if OmniAuth.config.test_mode
                     @env ||= {}
@@ -34,9 +38,6 @@ module OmniAuth
                 req = Rack::Request.new(env)
                 if req.cookies['kc_idp_hint']
                     params['kc_idp_hint'] = req.cookies['kc_idp_hint']
-                end
-                if req.cookies['kc_state']
-                    params['state'] = req.cookies['kc_state']
                 end
                 params
             end
