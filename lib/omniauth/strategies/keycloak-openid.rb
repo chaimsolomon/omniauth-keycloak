@@ -24,8 +24,8 @@ module OmniAuth
             end
 
             def authorize_params
-                if req.cookies['kc_state']
-                    options.authorize_params[:state] =  req.cookies['kc_state']
+                if request.cookies['kc_state']
+                    options.authorize_params[:state] =  request.cookies['kc_state']
                 else
                     options.authorize_params[:state] = SecureRandom.hex(24)
                 end
